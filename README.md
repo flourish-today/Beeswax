@@ -2,7 +2,7 @@
 
 <h1 align="center">Beeswax</h1>
 
-<h3 align="center">Create an effective dumbphone on Android</h3>
+<h3 align="center">Create a dumbphone on Android</h3>
 
 <p align="center">Beeswax prevents access to web browsers and newly installed apps.<br />You can't browse or access new apps without your lock code.</p>
 
