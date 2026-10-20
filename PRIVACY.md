@@ -36,7 +36,7 @@ Beeswax uses its Device Owner capability responsibly by only using these few Dev
 
 ## Verifying a release
 
-Use [AppVerifier](https://github.com/soupslurpr/AppVerifier) with the package name and hash below. Beeswax has also been [domain verified](https://github.com/privacyguides/verified-apps/issues/6777) and [submitted](https://github.com/privacyguides/verified-apps/issues/6778) to Privacy Guides' [verified-apps-android](https://github.com/privacyguides/verified-apps-android) database.
+Use [AppVerifier](https://github.com/soupslurpr/AppVerifier) with the package name and hash below. Beeswax has been [domain verified](https://github.com/privacyguides/verified-apps/issues/7308) and [submitted](https://github.com/privacyguides/verified-apps/issues/7307) to Privacy Guides' [verified-apps-android](https://github.com/privacyguides/verified-apps-android) database.
 
 ```
 org.getflourish.beeswax
