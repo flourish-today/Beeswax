@@ -28,10 +28,10 @@
 4.  Connect the phone to your computer. When the phone asks whether to allow USB debugging, tap Allow.
 5.  On your computer, open a terminal (Command Prompt on Windows) and run the command Beeswax shows on its screen: `adb shell dpm set-device-owner org.getflourish.beeswax/.Receiver` Beeswax should now say "Device owner: active."
 6.  Turn off Developer options in Settings → System → Developer options (this will also turn off USB debugging).
-7.  Install the apps you want to keep. Every app you have when you lock stays usable, so look through them first and uninstall any that let you browse the web (see [Usability limitations](https://github.com/flourish-today/beeswax/blob/main/SETUP.md#usability-limitations)). 
-8.  Hand the phone to the person who will keep the lock code. In Beeswax, they tap Lock, and Beeswax shows a new lock code.
-9.  They save the code, tap "I've saved it somewhere safe!", type the code back, and tap Lock. Capitals, spaces, and dashes don't matter. If the code doesn't match, Beeswax shows the same code again so they can check the copy they saved.
-10.  Check that Beeswax says "Beeswax is locked" and lists your browsers after "Hidden browsers", and that they're gone from the home screen.
+7.  Install the apps you want to keep. Every app you have when you lock stays usable, so look through them first and uninstall any that let you browse the web (see [Usability limitations](#usability-limitations)).
+8.  In Beeswax, tap Lock. Beeswax shows your new lock code.
+9.  Save the lock code, tap "I've saved it somewhere safe!", type the code back, and tap Lock. If the code doesn't match, Beeswax shows the same code again so you can check the copy you saved.
+10. Beeswax should now say "Beeswax is locked" and list your browsers after "Hidden browsers." Check that they're gone from the home screen.
 
 ## Troubleshooting
 
