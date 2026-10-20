@@ -56,7 +56,7 @@ See the [setup guide](SETUP.md) for the full steps.
 -   [How it works](SETUP.md#how-it-works)
 -   [FAQ](FAQ.md)
 -   [Privacy and security](PRIVACY.md)
--   [GrapheneOS forum thread](https://discuss.grapheneos.org/d/42598-odysseus-make-your-grapheneos-a-dumbphone)(Shared with Odysseus)
+-   [GrapheneOS forum thread (shared with Odysseus)](https://discuss.grapheneos.org/d/42598-odysseus-make-your-grapheneos-a-dumbphone)
 -   [Issues](https://github.com/flourish-today/beeswax/issues)
 
 ## Support
