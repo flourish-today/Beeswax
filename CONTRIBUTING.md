@@ -19,6 +19,4 @@ If you build a release yourself by following [Reproducible builds](PRIVACY.md#re
 
 ## Suggesting a change
 
--   Beeswax likely won't add permissions, network access, or libraries.
--   New features are unlikely to be accepted unless they fit what Beeswax already does.
--   These are just guidelines. Don’t worry about it, just reach out.
+-   Use the issue tracker.
