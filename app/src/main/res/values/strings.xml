@@ -1,0 +1,31 @@
+<resources>
+    <string name="status_device_owner">Device owner: active</string>
+    <string name="status_not_device_owner">Beeswax is not the device owner. Make sure to follow all the instructions from Beeswax\'s GitHub repo. To set up, run this from a computer with USB debugging:</string>
+    <string name="lock_off">Beeswax is unlocked. Lock to hide browsers and any apps installed after locking. The first Lock generates a random 16 character lock code which you have to save in order to access newly installed apps or access a web browser.</string>
+    <string name="lock_on">Beeswax is locked. Hidden browsers: %1$s. New apps are hidden until allowed below. Enter the lock code, then tap Unlock or Allow. If you allow an app, the only way to block it again is to uninstall it.</string>
+    <string name="lock_test_note">Test build: debugging stays allowed while locked.</string>
+    <string name="lock_none">none</string>
+    <string name="lock">Lock</string>
+    <string name="code_title">Your new lock code</string>
+    <string name="code_message">Save the lock code. You need to enter it to access web browsers, access newly installed apps, and deactivate Beeswax. Without it, the only way to install new apps or access the web is a factory reset.</string>
+    <string name="code_saved">I\'ve saved it somewhere safe!</string>
+    <string name="code_hint">Lock code</string>
+    <string name="code_check_title">Type your lock code</string>
+    <string name="code_check_message">Type the code you saved, to make sure you have it.</string>
+    <string name="code_mismatch">That doesn\'t match. Here\'s the same code again.</string>
+    <string name="relock_title">Lock?</string>
+    <string name="relock_message">Lock with your current lock code. Only lock if you or someone you trust still has it: without it, the only way to install apps or access a web browser in the future is a factory reset.</string>
+    <string name="lock_other_admins">Beeswax can\'t be locked while another device admin app is on: %1$s. Turn it off in Settings → Security &amp; privacy → More security &amp; privacy → Device admin, then try again.</string>
+    <string name="lock_other_users">Beeswax can\'t be locked while the phone has other users. Delete them in Settings → System → Users, then try again.</string>
+    <string name="new_code">New code</string>
+    <string name="code_wrong">Wrong code.</string>
+    <string name="unlock">Unlock</string>
+    <string name="allow_app">Allow %1$s (%2$s)</string>
+    <string name="allow_app_web">Allow %1$s (%2$s). It opens web links, so it may be a browser.</string>
+    <string name="backups_failed">Couldn\'t turn on system backups.</string>
+    <string name="deactivate">Deactivate</string>
+    <string name="exit_path_note">To undo Beeswax, tap Deactivate. Beeswax can then be uninstalled.</string>
+    <string name="deactivate_confirm_title">Deactivate?</string>
+    <string name="deactivate_failed">Couldn\'t deactivate: %1$s</string>
+    <string name="deactivate_confirm_message">Deactivating removes Beeswax as the device owner. To enable it again you\'ll need to use the ADB command. There\'s no reason to deactivate if you want to access a web browser or install an app. You can already do that when Beeswax is unlocked.</string>
+</resources>
