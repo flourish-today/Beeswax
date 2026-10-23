@@ -1,5 +1,25 @@
 # FAQ
 
+## Does Beeswax work on my phone?
+
+Beeswax has only been tested on GrapheneOS so far. Other versions of Android haven't been tested yet.
+
+## Do I need a computer or a factory reset?
+
+You need a computer with ADB once, during setup. Android only lets Beeswax manage a phone with no accounts, no other users and no Private Space, so you'll remove those first. A factory reset always works if that's easier.
+
+## What if I forget my lock code?
+
+Without your lock code, you can't access new apps you install and can't access a web browser. You can still export all your data and access the apps you already have. If you need to install new apps or access a browser, you'll need to factory reset your phone.
+
+## Can apps still open web pages?
+
+Some can. An app with a built-in browser, like a help link or an in-app browser, may still open websites. Choose the apps you keep with that in mind.
+
+## How do I remove Beeswax?
+
+Enter your lock code, tap Unlock, then tap Deactivate and confirm. See the [setup guide](SETUP.md) for more info.
+
 ## Does Beeswax use AI?
 
 Yes. This app was developed with Claude Opus 5.5. Its code was reviewed with Opus 5.5 and all issues were fixed or found inconsequential. More reviews are welcome.
