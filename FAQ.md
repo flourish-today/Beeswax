@@ -12,9 +12,12 @@ You need a computer with ADB once, during setup. Android only lets Beeswax manag
 
 Without your lock code, you can't access new apps you install and can't access a web browser. You can still export all your data and access the apps you already have. If you need to install new apps or access a browser, you'll need to factory reset your phone.
 
-## Can apps still open web pages?
+## What doesn't work with Beeswax?
 
-Some can. An app with a built-in browser, like a help link or an in-app browser, may still open websites. Choose the apps you keep with that in mind.
+- You can't use Private Space, and you can't add other users while Beeswax is locked.
+- Links that would open in a browser don't open while Beeswax is locked.
+- Apps with a built-in browser, like a help link or an in-app browser, may still open websites. Choose the apps you keep with that in mind.
+- Wi-Fi sign-in pages, like at a hotel or café, still open.
 
 ## How do I remove Beeswax?
 
