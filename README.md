@@ -27,9 +27,6 @@
 
 <p align="center"><a href="SETUP.md#screenshots">More screenshots</a></p>
 
-> [!WARNING]
-> **Beeswax is in beta.** It has only been tested on GrapheneOS and stock Pixel OS. Before you lock it, read the [setup guide](SETUP.md) and keep your lock code somewhere safe. If the code is lost, the only way back is a factory reset. If something doesn't work as expected, please open an [issue](https://github.com/flourish-today/beeswax/issues).
-
 
 ## Why Beeswax?
 
@@ -49,7 +46,7 @@ You need an Android phone, a USB-C cable, and a computer with [ADB installed](ht
 
 <div align="center">
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/flourish-today/beeswax/releases"><img src="/downloads-images/badge_obtainium.png" alt="Get it on Obtainium" height="80" /></a>
-  <a href="https://github.com/flourish-today/beeswax/releases"><img src="/downloads-images/badge_github.png" alt="Get it on GitHub" height="80" /></a>
+  <a href="https://github.com/flourish-today/Beeswax/releases/latest"><img src="/downloads-images/badge_github.png" alt="Get it on GitHub" height="80" /></a>
 </div>
 
 <p align="center">Verify your download with <a href="https://github.com/soupslurpr/AppVerifier">AppVerifier</a>:</p>
