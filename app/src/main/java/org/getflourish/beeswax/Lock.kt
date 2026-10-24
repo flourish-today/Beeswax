@@ -8,11 +8,18 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.UserManager
+import android.provider.Settings
+import android.provider.Telephony
+import android.telecom.TelecomManager
+import android.view.inputmethod.InputMethodManager
 
-// The lock. While locked, the browsers found at lock time stay hidden, and every app installed
-// after that is hidden until it's allowed. Updates keep an app's first install time, so they go through.
+// The lock. While locked, the apps blocked at Lock (by default the browsers it finds) and the apps hidden
+// from the list stay hidden, and every app installed after that is hidden until it's shown. Updates keep
+// an app's first install time, so they go through.
 object Lock {
     private const val LOCKED = "locked"
     private const val BLOCKED = "blocked"
@@ -28,18 +35,15 @@ object Lock {
 
     fun quarantined(context: Context) = set(context, QUARANTINED)
 
-    // Quarantined apps that are still installed, for the screen's Allow list.
-    fun waiting(context: Context) = quarantined(context).filter {
-        packageInfo(context, it, PackageManager.MATCH_UNINSTALLED_PACKAGES) != null
-    }
-
     // Synchronized, with the "already locked" check inside, so two Lock dialogs confirmed at once lock only once.
-    // A new code is saved here, in the same step.
+    // A new code and the plan from the list before Lock (package name to switch, only the switches changed)
+    // are applied here, in the same step: browsers switched on stay visible, and apps switched off are hidden
+    // by name, like the list's hide(). With no plan, every browser is hidden. Essential apps never are.
     @Synchronized
-    fun lock(context: Context, code: String? = null) {
+    fun lock(context: Context, code: String, plan: Map<String, Boolean>) {
         if (isLocked(context)) return
-        if (code != null) Code.save(context, code)
-        val blocked = browsers(context)
+        Code.save(context, code)
+        val blocked = browsers(context) - plan.filterValues { it }.keys + plan.filterValues { !it }.keys - essential(context)
         val approved = userApps(context).filter { it.packageName !in blocked }.map { fingerprint(it) }.toSet()
         // No new users, since a new user would have a browser and an app store.
         for (restriction in restrictions(context)) dpm(context).addUserRestriction(admin(context), restriction)
@@ -54,7 +58,7 @@ object Lock {
         enforce(context)
     }
 
-    // Also run by Deactivate. The lists are cleared only after everything is visible again.
+    // Run by Deactivate. The lists are cleared only after everything is visible again.
     @Synchronized
     fun unlock(context: Context) {
         // Unlock first, so the "package added" broadcasts from unhiding don't hide anything again.
@@ -71,32 +75,70 @@ object Lock {
         prefs(context).edit().clear().commit()
     }
 
-    fun allow(context: Context, packageName: String) {
+    @Synchronized
+    fun show(context: Context, packageName: String) {
         val info = packageInfo(context, packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES) ?: return
         // Approve before unhiding, because unhiding sends a "package added" broadcast that Guard checks.
         prefs(context).edit()
             .putStringSet(APPROVED, set(context, APPROVED) + fingerprint(info))
+            .putStringSet(BLOCKED, blocked(context) - packageName)
             .putStringSet(QUARANTINED, quarantined(context) - packageName)
             .commit()
         setHidden(context, packageName, false)
     }
 
+    // Hidden by name, like the browsers found at lock time, so it's hidden again after a restart or a
+    // reinstall. Never an essential app.
+    @Synchronized
+    fun hide(context: Context, packageName: String) {
+        if (!isLocked(context) || packageName in essential(context)) return
+        prefs(context).edit()
+            .putStringSet(BLOCKED, blocked(context) + packageName)
+            .putStringSet(QUARANTINED, quarantined(context) - packageName)
+            .commit()
+        setHidden(context, packageName, true)
+    }
+
+    // New code, from the list. Synchronized so it can't run in the middle of Deactivate's unlock.
+    @Synchronized
+    fun newCode(context: Context, code: String) {
+        if (isLocked(context)) Code.save(context, code)
+    }
+
+    // The list: every installed app that isn't part of the system, every browser and every app with a
+    // home-screen icon (built-in ones too, so they can be blocked) and anything Beeswax hid, hidden or not.
+    // Never an essential app.
+    fun listed(context: Context): List<String> {
+        val hidden = PackageManager.MATCH_UNINSTALLED_PACKAGES
+        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val builtIn = browsers(context, hidden) + activities(context, launcher, hidden).map { it.activityInfo.packageName } +
+            blocked(context) + quarantined(context)
+        val installed = context.packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(hidden.toLong()))
+            .filter { (it.applicationInfo?.flags ?: 0) and ApplicationInfo.FLAG_INSTALLED != 0 }
+        return installed.filter { isUserApp(context, it) || it.packageName in builtIn }.map { it.packageName } -
+            essential(context)
+    }
+
+    fun isHidden(context: Context, packageName: String) = dpm(context).isApplicationHidden(admin(context), packageName)
+
     // Runs whenever Guard starts, which catches anything installed while it wasn't running.
+    @Synchronized
     fun enforce(context: Context) {
         if (!isLocked(context)) return
-        for (packageName in blocked(context)) setHidden(context, packageName, true)
+        for (packageName in blocked(context) - essential(context)) setHidden(context, packageName, true)
         for (info in userApps(context)) check(context, info)
     }
 
     // Runs for each "package added" broadcast, for new installs and updates alike.
+    @Synchronized
     fun check(context: Context, packageName: String) {
         if (!isLocked(context)) return
         if (packageName in blocked(context)) {
-            setHidden(context, packageName, true)
+            if (packageName !in essential(context)) setHidden(context, packageName, true)
             return
         }
         // Include hidden apps: Android re-hides a reinstalled app that a device owner hid before,
-        // and it still needs to be listed so it can be allowed.
+        // and it still needs to be listed so it can be shown.
         val info = packageInfo(context, packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES) ?: return
         if (isUserApp(context, info)) check(context, info)
     }
@@ -106,16 +148,18 @@ object Lock {
         return info?.applicationInfo?.loadLabel(context.packageManager) ?: packageName
     }
 
+    fun icon(context: Context, packageName: String): Drawable? {
+        val info = packageInfo(context, packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        return info?.applicationInfo?.loadIcon(context.packageManager)
+    }
+
     // Other apps that are active device admins. Android won't hide them, so Lock refuses while any exist.
     fun otherAdmins(context: Context) = dpm(context).activeAdmins.orEmpty().map { it.packageName }.distinct().filter {
         packageInfo(context, it, PackageManager.MATCH_UNINSTALLED_PACKAGES)?.let { info -> isUserApp(context, info) } == true
     }
 
-    // The same web-link test as browsers(), for one app, hidden or not.
-    fun opensWeb(context: Context, packageName: String) = context.packageManager.queryIntentActivities(
-        webIntent().setPackage(packageName),
-        PackageManager.ResolveInfoFlags.of((browserFlags() or PackageManager.MATCH_UNINSTALLED_PACKAGES).toLong()),
-    ).isNotEmpty()
+    // The browsers Lock blocks by default, hidden or not, so the list starts the same ones switched off.
+    fun detectedBrowsers(context: Context) = browsers(context, PackageManager.MATCH_UNINSTALLED_PACKAGES)
 
     private fun check(context: Context, info: PackageInfo) {
         if (fingerprint(info) in set(context, APPROVED)) return
@@ -131,19 +175,25 @@ object Lock {
     // Built-in apps that open web links without being browsers, like Carrier Communications for
     // carrier sign-in pages, are left alone. Disabled apps count too, since they could be switched
     // on again in Settings after locking.
-    private fun browsers(context: Context): Set<String> {
-        val flags = PackageManager.ResolveInfoFlags.of(browserFlags().toLong())
-        val web = webIntent()
-        val main = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER)
-        val found = context.packageManager.queryIntentActivities(main, flags) +
-            context.packageManager.queryIntentActivities(web, flags).filter { !isSystem(it.activityInfo.applicationInfo) }
+    private fun browsers(context: Context, extraFlags: Int = 0): Set<String> {
+        val (main, web) = browserTests(context, extraFlags)
+        val found = main + web.filter { !isSystem(it.activityInfo.applicationInfo) }
         return found.map { it.activityInfo.packageName }.toSet() - context.packageName
     }
 
-    private fun browserFlags() = PackageManager.MATCH_ALL or PackageManager.MATCH_DISABLED_COMPONENTS or
-        PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS
+    // Apps that call themselves a browser, and apps that can open any web link.
+    private fun browserTests(context: Context, extraFlags: Int): Pair<List<ResolveInfo>, List<ResolveInfo>> {
+        val main = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER)
+        val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")).addCategory(Intent.CATEGORY_BROWSABLE)
+        return activities(context, main, extraFlags) to activities(context, web, extraFlags)
+    }
 
-    private fun webIntent() = Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")).addCategory(Intent.CATEGORY_BROWSABLE)
+    // Disabled apps and components count too, since they could be switched on again in Settings after locking.
+    private fun activities(context: Context, intent: Intent, extraFlags: Int): List<ResolveInfo> {
+        val flags = PackageManager.MATCH_ALL or PackageManager.MATCH_DISABLED_COMPONENTS or
+            PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS or extraFlags
+        return context.packageManager.queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(flags.toLong()))
+    }
 
     // Installed, visible apps that aren't part of the system and aren't Beeswax. System apps come
     // only with OS updates, so they're never quarantined; browsers among them are hidden by name.
@@ -166,6 +216,25 @@ object Lock {
         listOf(UserManager.DISALLOW_ADD_USER)
     } else {
         listOf(UserManager.DISALLOW_ADD_USER, UserManager.DISALLOW_DEBUGGING_FEATURES)
+    }
+
+    // Never listed or blocked: Beeswax and enabled keyboards, so the code can always be typed, and the built-in
+    // phone, SMS and home apps in use and Settings, so calls, texts and the home screen keep working and factory
+    // reset stays reachable. Read each time, so a newly chosen default counts at once. Only built-in, visible
+    // ones count, so an installed app can't be made unblockable by choosing it as a default.
+    private fun essential(context: Context): Set<String> {
+        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val settings = Intent(Settings.ACTION_SETTINGS)
+        val only = { flag: Int -> PackageManager.ResolveInfoFlags.of(flag.toLong()) }
+        // A phone without calls or texts may have no default for them, or throw. Guard runs this, so it mustn't.
+        val defaults = listOfNotNull(
+            runCatching { context.getSystemService(TelecomManager::class.java)?.defaultDialerPackage }.getOrNull(),
+            runCatching { Telephony.Sms.getDefaultSmsPackage(context) }.getOrNull(),
+            context.packageManager.resolveActivity(home, only(PackageManager.MATCH_DEFAULT_ONLY))?.activityInfo?.packageName,
+        ) + context.packageManager.queryIntentActivities(settings, only(PackageManager.MATCH_SYSTEM_ONLY)).map { it.activityInfo.packageName }
+        val builtIn = defaults.filter { packageInfo(context, it, 0)?.let { info -> isSystem(info.applicationInfo) } == true }
+        val keyboards = context.getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }
+        return (builtIn + keyboards + context.packageName).toSet()
     }
 
     private fun setHidden(context: Context, packageName: String, hidden: Boolean) {

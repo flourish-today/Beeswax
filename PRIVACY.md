@@ -8,20 +8,35 @@ Beeswax uses its Device Owner capability responsibly by only using these few Dev
 
 | What it does | Android API | When |
 |---|---|---|
-| Blocks adding new users, since a new user would have its own browser and app store | `DevicePolicyManager.addUserRestriction` with `DISALLOW_ADD_USER` | When you tap Lock |
-| Blocks debugging features, so ADB can't be used to get around the lock | `DevicePolicyManager.addUserRestriction` with `DISALLOW_DEBUGGING_FEATURES` | When you tap Lock |
-| Hides browsers and new apps, and brings them back | `DevicePolicyManager.setApplicationHidden` | Hides them when you tap Lock, when an app is installed while locked, and when the phone restarts while locked. Brings them back when you tap Allow, Unlock, or Deactivate |
-| Turns Guard, Beeswax's background service that watches for new apps, on and off | `PackageManager.setComponentEnabledSetting` (Guard only) | On when you tap Lock, off when you tap Unlock or Deactivate |
-| Allows adding new users again | `DevicePolicyManager.clearUserRestriction` with `DISALLOW_ADD_USER` | When you tap Unlock or Deactivate |
-| Allows debugging features again | `DevicePolicyManager.clearUserRestriction` with `DISALLOW_DEBUGGING_FEATURES` | When you tap Unlock or Deactivate |
-| Turns the backup service on, which Android turns off when a device owner is set | `DevicePolicyManager.setBackupServiceEnabled` | Whenever you open Beeswax |
+| Blocks adding new users, since a new user would have its own browser and app store | `DevicePolicyManager.addUserRestriction` with `DISALLOW_ADD_USER` | When you lock |
+| Blocks debugging features, so ADB can't be used to get around the lock (release builds only) | `DevicePolicyManager.addUserRestriction` with `DISALLOW_DEBUGGING_FEATURES` | When you lock |
+| Blocks and allows apps | `DevicePolicyManager.setApplicationHidden` | Blocks the apps switched off in the list (browsers by default) when you lock, an app installed while locked, and an app you switch off in the list. Blocks them again whenever Guard starts, for example after a restart. Allows an app when you switch it on in the list, and every app when you tap Deactivate |
+| Turns Guard, Beeswax's background service that watches for new apps, on and off | `PackageManager.setComponentEnabledSetting` (Guard only) | On when you lock, off when you tap Deactivate |
+| Allows adding new users again | `DevicePolicyManager.clearUserRestriction` with `DISALLOW_ADD_USER` | When you tap Deactivate |
+| Allows debugging features again | `DevicePolicyManager.clearUserRestriction` with `DISALLOW_DEBUGGING_FEATURES` | When you tap Deactivate |
+| Turns the backup service on, which Android turns off when a device owner is set | `DevicePolicyManager.setBackupServiceEnabled` | Whenever Beeswax's screen opens or changes |
 | Removes itself as device owner | `DevicePolicyManager.clearDeviceOwnerApp` | When you tap Deactivate |
+
+## APIs used to read the phone
+
+These only read, and change nothing. Before you lock, Beeswax uses only these to show its list, and it applies your switches only when you tap Lock.
+
+| What it does | Android API | When |
+|---|---|---|
+| Lists the apps on your phone | `PackageManager.getInstalledPackages`, `PackageManager.getPackageInfo` | When Beeswax shows its list, when you lock, when you block or allow an app, when an app is installed while locked, when Guard starts, and when you tap Deactivate |
+| Finds browsers (apps that call themselves a browser, and apps that can open any web link) and apps with a home screen icon, so built-in ones are listed too | `PackageManager.queryIntentActivities` | When Beeswax shows its list, and when you lock |
+| Shows each app's name and icon | `ApplicationInfo.loadLabel`, `ApplicationInfo.loadIcon` | When Beeswax shows its list |
+| Finds the keyboards you've turned on, so they're never listed or blocked | `InputMethodManager.getEnabledInputMethodList` | When Beeswax shows its list, when you lock, when you block an app, when a blocked app is installed or updated while locked, and when Guard starts |
+| Finds Settings and the built-in phone, messaging and home screen apps in use, so they're never listed or blocked | `TelecomManager.getDefaultDialerPackage`, `Telephony.Sms.getDefaultSmsPackage`, `PackageManager.resolveActivity`, `PackageManager.queryIntentActivities` | When Beeswax shows its list, when you lock, when you block an app, when a blocked app is installed or updated while locked, and when Guard starts |
+| Shows which apps are blocked, and finds every blocked app to allow it again | `DevicePolicyManager.isApplicationHidden` | When Beeswax shows its list while locked, and when you tap Deactivate |
+| Checks for other device admin apps and other users, which Beeswax can't lock with | `DevicePolicyManager.getActiveAdmins`, `DevicePolicyManager.getSecondaryUsers` | When you tap Lock |
+| Checks that Beeswax is the device owner | `DevicePolicyManager.isDeviceOwnerApp` | Whenever Beeswax's screen opens or changes |
 
 ## Risks to using Beeswax
 
 -   Beeswax is a device-owner app, which gives it powers far beyond a normal app. Beeswax uses only the few listed above, but a future update signed with the same key could, for example, give Beeswax the ability to wipe your device.
--   If the lock code is lost while Beeswax is locked, the only way to get your browsers back or allow new apps is a factory reset. Not even ADB can remove Beeswax while it's locked.
--   By using Beeswax, you're using Android in a non-standard way. Beeswax hides the browsers, including the default browser (Vanadium on GrapheneOS). GrapheneOS recognizes device owners as the standard way to manage devices, and ADB is currently the only way to set one up. However, GrapheneOS advises against apps that use these APIs to "disallow a bunch of functionality." [1]
+-   If the lock code is lost while Beeswax is locked, the only way to unblock apps or allow new apps is a factory reset. Not even ADB can remove Beeswax while it's locked.
+-   By using Beeswax, you're using Android in a non-standard way. Beeswax blocks browsers by default, including the built-in browser (Vanadium on GrapheneOS). GrapheneOS recognizes device owners as the standard way to manage devices, and ADB is currently the only way to set one up. However, GrapheneOS advises against apps that use these APIs to "disallow a bunch of functionality." [1]
 
 ## Features
 
@@ -29,7 +44,7 @@ Beeswax uses its Device Owner capability responsibly by only using these few Dev
 -   Its one permission, `QUERY_ALL_PACKAGES`, lets it see the apps installed on your phone, so it can find browsers and new apps. Without it, Android hides other apps from Beeswax and Beeswax can't hide them.
 -   Its only exported component is its launcher screen, and its only library is the Kotlin standard library. Guard, its background service, isn't exported, only Android can start it, and it's only on while Beeswax is locked. You can check the components and the permission in `app/src/main/AndroidManifest.xml`.
 -   The lock code is never stored. Beeswax keeps only a salted hash of it, in its private storage, which Settings can't clear while Beeswax is the device owner.
--   Beeswax blocks screenshots and screen recording of its own screen, so the lock code can't be recorded as it's typed.
+-   Beeswax blocks screenshots and screen recording of its own screen and dialogs, so the lock code can't be recorded as it's typed.
 -   Beeswax has reproducible builds. See [Reproducible builds](#reproducible-builds).
 -   Beeswax has a simple design with a single screen.
 -   Beeswax is tiny; it's about 300 kB installed.
@@ -58,17 +73,17 @@ You need:
    ```
    git clone https://github.com/flourish-today/beeswax.git
    cd beeswax
-   git checkout v0.09
+   git checkout v1.01
    gradle --no-daemon :app:assembleRelease -Pandroid.aapt2FromMavenOverride="$ANDROID_HOME/build-tools/37.0.0/aapt2"
    ```
 
-2. Download `Beeswax-0.09.apk` from the [v0.09 release](https://github.com/flourish-today/beeswax/releases/tag/v0.09) into the `beeswax` folder.
+2. Download `Beeswax-1.01.apk` from the [v1.01 release](https://github.com/flourish-today/beeswax/releases/tag/v1.01) into the `beeswax` folder.
 
 3. Unpack both APKs and compare them:
 
    ```
    mkdir rel mine
-   unzip -q Beeswax-0.09.apk -d rel
+   unzip -q Beeswax-1.01.apk -d rel
    unzip -q app/build/outputs/apk/release/app-release-unsigned.apk -d mine
    diff -rq rel mine && echo MATCH
    ```

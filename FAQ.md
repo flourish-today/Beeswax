@@ -2,7 +2,7 @@
 
 ## Does Beeswax work on my phone?
 
-Beeswax has only been tested on GrapheneOS so far. Other versions of Android haven't been tested yet.
+Beeswax has only been tested on GrapheneOS and stock Pixel OS so far. Other versions of Android haven't been tested yet.
 
 ## Do I need a computer or a factory reset?
 
@@ -10,14 +10,22 @@ You need a computer with ADB once, during setup. Android only lets Beeswax manag
 
 ## What if I forget my lock code?
 
-Without your lock code, you can't access new apps you install and can't access a web browser. You can still export all your data and access the apps you already have. If you need to install new apps or access a browser, you'll need to factory reset your phone.
+Without your lock code, you can't access new apps you install and can't access apps you've blocked. You can still export all your data and access the apps you already have. If you need to install new apps or unblock apps, you'll need to factory reset your phone.
 
 ## What doesn't work with Beeswax?
 
 - You can't use Private Space, and you can't add other users while Beeswax is locked.
-- Links that would open in a browser don't open while Beeswax is locked.
+- Links that would open in a browser don't open while Beeswax is locked, unless you've allowed a browser.
 - Apps with a built-in browser, like a help link or an in-app browser, may still open websites. Choose the apps you keep with that in mind.
 - Wi-Fi sign-in pages, like at a hotel or café, still open.
+
+## Can an app I've allowed start letting me browse later?
+
+Yes. Updates to an allowed app go through without your lock code, so an app could add a way to browse the web in a later update. If one does, enter your lock code and switch it off.
+
+## Can ADB get around Beeswax?
+
+No. Once Beeswax is locked, it blocks debugging features until you deactivate it, so ADB can't be used to get around the lock.
 
 ## How do I remove Beeswax?
 

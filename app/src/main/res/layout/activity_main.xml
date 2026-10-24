@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- filterTouchesWhenObscured: ignore taps while another app draws over this screen, so an
-     overlay can't trick anyone into tapping Lock, Unlock, Allow or Deactivate. -->
+     overlay can't trick anyone into tapping Lock, a switch, New code or Deactivate. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -23,7 +23,8 @@
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="@string/status_not_device_owner" />
 
         <TextView
             android:id="@+id/adb_command"
@@ -39,11 +40,17 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- Closes the open list. Beeswax stays locked. -->
+            <Button
+                android:id="@+id/close_list"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lock" />
+
             <TextView
                 android:id="@+id/lock_status"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp" />
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:id="@+id/lock_test_note"
@@ -64,22 +71,31 @@
                 android:inputType="textVisiblePassword|textNoSuggestions" />
 
             <Button
-                android:id="@+id/lock"
+                android:id="@+id/open_list"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/lock" />
+                android:text="@string/open_list" />
 
-            <Button
-                android:id="@+id/unlock"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/unlock" />
-
+            <!-- Filled in by MainActivity before the first Lock and while the list is open. -->
             <LinearLayout
-                android:id="@+id/quarantine"
+                android:id="@+id/app_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
+
+            <Button
+                android:id="@+id/lock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/lock" />
+
+            <Button
+                android:id="@+id/new_code"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/new_code" />
 
             <TextView
                 android:id="@+id/backups_failed"
@@ -89,24 +105,12 @@
                 android:text="@string/backups_failed"
                 android:visibility="gone" />
 
-            <LinearLayout
-                android:id="@+id/exit_controls"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/deactivate"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <Button
-                    android:id="@+id/deactivate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="@string/deactivate" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/exit_path_note" />
-            </LinearLayout>
+                android:layout_marginTop="24dp"
+                android:text="@string/deactivate" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

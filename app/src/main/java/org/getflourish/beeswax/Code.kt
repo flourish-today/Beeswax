@@ -29,8 +29,6 @@ object Code {
             .commit()
     }
 
-    fun exists(context: Context) = prefs(context).contains("hash")
-
     // For checking a newly made code before it's saved.
     fun same(code: String, typed: String) = normalize(code) == normalize(typed)
 

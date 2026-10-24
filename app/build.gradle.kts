@@ -16,8 +16,8 @@ android {
         applicationId = "org.getflourish.beeswax"
         minSdk = 35
         targetSdk = 37
-        versionCode = 9
-        versionName = "0.09"
+        versionCode = 15
+        versionName = "1.01"
         manifestPlaceholders["appName"] = if (testBuild) "Beeswax Test" else "Beeswax"
     }
 
