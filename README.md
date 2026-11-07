@@ -7,7 +7,7 @@
 <p align="center">Beeswax blocks web browsers, newly installed apps and any app you pick until you enter your lock code.<br />Give the code to someone you trust, or put it somewhere inconvenient.</p>
 
 <p align="center">
-  <a href="PRIVACY.md#features"><img alt="No network access" src="https://img.shields.io/badge/network-none-2EA043?style=for-the-badge&labelColor=1F4D2B" /></a>
+  <a href="PRIVACY.md"><img alt="No network access" src="https://img.shields.io/badge/network-none-2EA043?style=for-the-badge&labelColor=1F4D2B" /></a>
   <a href="app/src/main/AndroidManifest.xml"><img alt="1 permission" src="https://img.shields.io/badge/permissions-1-2EA043?style=for-the-badge&labelColor=1F4D2B" /></a>
   <a href="PRIVACY.md#reproducible-builds"><img alt="Reproducible builds" src="https://img.shields.io/badge/builds-reproducible-2EA043?style=for-the-badge&labelColor=1F4D2B" /></a>
 </p>
@@ -33,13 +33,14 @@
 - **Block the browser.** Android doesn't provide a built-in way to prevent access to the system browser. Beeswax blocks it, preventing access no matter what version of Android you use. Browsers start out blocked, and you choose whether to keep any.
 - **Block any app you pick.** Before you lock, Beeswax lists your apps and you choose which ones to block. Later, you can enter your lock code to block or allow apps.
 - **New apps are blocked.** Once Beeswax is locked, every app you install is blocked until you allow it with your lock code. Your apps keep updating as usual.
-- **Hard to bypass.** Beeswax's restrictions are locked using a random 16 character code that's generated when you lock it. You don't need to worry about restarts, safe mode, or ADB giving you access. Without your lock code, the only way to use a blocked app or a new app is through a factory reset.
+- **Hard to bypass.** Beeswax's restrictions are locked using a random 16 character code that's generated when you lock it. You don't need to worry about restarts, safe mode, or ADB giving you access (ADB stays off unless you allow developer options). Without your lock code, the only way to use a blocked app or a new app is through a factory reset.
+- **More settings.** Optionally block factory reset from Settings, lock your private DNS, or allow developer options. Each needs your lock code to change.
 - **Full app updates** Unlike user profile based solutions, Beeswax allows you to update your apps without allowing the ability to install new ones.
 - **Privacy and security focused.** Beeswax has one permission, no network access, and no telemetry. It has reproducible builds so you can verify the source code corresponds to the distributed APK.
 
 ## What you need
 
-You need an Android phone, a USB-C cable, and a computer with [ADB installed](https://developer.android.com/tools/adb). Android only allows adding a device owner on a phone with no accounts, no other users, and no Private Space, so you'll need to remove these if you have any of them. Alternatively a factory reset will always work. **Back up all important data off your device before you start.**
+You need an Android phone running Android 13 or newer (tested on GrapheneOS and the stock Pixel OS on Android 17, and Xiaomi HyperOS on Android 16), and [ADB](https://developer.android.com/tools/releases/platform-tools) on a computer or on the phone itself ([setup guide](SETUP.md#connecting-adb)). Android only allows adding a device owner on a phone with no accounts, no other user profiles, and no Private Spaces, so you'll need to remove these if you have any of them. Alternatively a factory reset will always work. **Back up all important data off your device before you start.**
 
 
 <h2 align="center">Download</h2>
@@ -67,7 +68,7 @@ See the [setup guide](SETUP.md) for the full steps.
 
 ## Learn more
 
--   [How it works](SETUP.md#how-it-works)
+-   [Website](https://beeswax.getflourish.org)
 -   [FAQ](FAQ.md)
 -   [Privacy and security](PRIVACY.md)
 -   [GrapheneOS forum thread (shared with Odysseus)](https://discuss.grapheneos.org/d/42598-odysseus-make-your-grapheneos-a-dumbphone)
@@ -75,7 +76,7 @@ See the [setup guide](SETUP.md) for the full steps.
 
 ## Support
 
-**Monero**
+**Monero** ([QR code and why Monero](https://beeswax.getflourish.org/monero/))
 
 ```
 82omZG3aUU7gqJhR6dZGSReYvKD7kHFuxj5MGKMAGiJdcSYLnMb9Nky9UBxeuadSSzCNYpwfUueQBdQPEaTXmLH4Tkmbv39

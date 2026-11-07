@@ -14,10 +14,10 @@ android {
 
     defaultConfig {
         applicationId = "org.getflourish.beeswax"
-        minSdk = 35
+        minSdk = 33
         targetSdk = 37
-        versionCode = 15
-        versionName = "1.01"
+        versionCode = 23
+        versionName = "1.02"
         manifestPlaceholders["appName"] = if (testBuild) "Beeswax Test" else "Beeswax"
     }
 

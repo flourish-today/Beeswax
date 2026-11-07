@@ -2,11 +2,15 @@
 
 ## Does Beeswax work on my phone?
 
-Beeswax has only been tested on GrapheneOS and stock Pixel OS so far. Other versions of Android haven't been tested yet.
+Beeswax supports Android 13 and newer. It has been tested on GrapheneOS, the stock Pixel OS, on Android 17 and the Xiaomi HyperOS on Android 16.
 
 ## Do I need a computer or a factory reset?
 
-You need a computer with ADB once, during setup. Android only lets Beeswax manage a phone with no accounts, no other users and no Private Space, so you'll remove those first. A factory reset always works if that's easier.
+You need ADB once, during setup. You can use a computer with wireless debugging, USB debugging, or on your phone directly with Termux. Android only lets Beeswax manage a phone with no accounts, no other user profiles and no Private Spaces, so you'll remove those first. A factory reset always works if that's easier than removing the accounts and profiles.
+
+## How do I allow or block an app later?
+
+Open Beeswax, enter your lock code, tap Unlock and flip the app's switch. New apps are blocked when you install them, and you allow them the same way. Think twice about an app marked "Detected as a browser". To get a new lock code, tap New code in the list.
 
 ## What if I forget my lock code?
 
@@ -14,26 +18,17 @@ Without your lock code, you can't access new apps you install and can't access a
 
 ## What doesn't work with Beeswax?
 
-- You can't use Private Space, and you can't add other users while Beeswax is locked.
+- You can't use Private Spaces or create other user profiles.
 - Links that would open in a browser don't open while Beeswax is locked, unless you've allowed a browser.
-- Apps with a built-in browser, like a help link or an in-app browser, may still open websites. Choose the apps you keep with that in mind.
-- Wi-Fi sign-in pages, like at a hotel or café, still open.
-
-## Can an app I've allowed start letting me browse later?
-
-Yes. Updates to an allowed app go through without your lock code, so an app could add a way to browse the web in a later update. If one does, enter your lock code and switch it off.
-
-## Can ADB get around Beeswax?
-
-No. Once Beeswax is locked, it blocks debugging features until you deactivate it, so ADB can't be used to get around the lock.
+- Apps with a built-in browser, like a help link or an in-app browser, may still open websites. The vast majority of websites do not allow this and it's recommended against by Android.
 
 ## How do I remove Beeswax?
 
-Enter your lock code, tap Unlock, then tap Deactivate and confirm. See the [setup guide](SETUP.md) for more info.
+Enter your lock code, tap Unlock, then tap Deactivate and confirm. Then you can uninstall it.
 
-## Does Beeswax use AI?
+## Was Beeswax built with AI?
 
-Yes. This app was developed with Claude Opus 5.5. Its code was reviewed with Opus 5.5 and all issues were fixed or found inconsequential. More reviews are welcome.
+Yes. This app was developed with Opus 5.5. Its code was reviewed with Opus 5.5 and all issues were fixed or found inconsequential. More reviews are welcome.
 
 ## Is Beeswax secure?
 
@@ -53,6 +48,6 @@ In the future, depending on GrapheneOS, Beeswax may be updated so you can instal
 
 If GrapheneOS adds support for QR code provisioning, it will likely be added and then work on other Android devices.
 
-## What if I have an iPhone or iPad that I want to achieve the same result on?
+## What if I have an iPhone or iPad?
 
-You should use Apple Configurator ([guide1](https://redlib.catsarch.com/r/nosurf/comments/1731ozp/how_to_turn_your_your_iphone_into_dumb_phone/) / [guide2](https://stopa.io/post/297)) to manage your devices, remove the browser and prevent new app installs. A macOS device and a factory reset of your iPhone/iPad are required for the initial setup. A [new app](https://news.ycombinator.com/item?id=49982974) that claims to allow this setup without a factory reset has been released but I have not looked into it at all and this is not a recommendation.
+You should use Apple Configurator ([guide1](https://redlib.catsarch.com/r/nosurf/comments/1731ozp/how_to_turn_your_your_iphone_into_dumb_phone/) / [guide2](https://stopa.io/post/297)) to manage your devices, remove the browser and prevent new app installs. A macOS device and a factory reset of your iPhone/iPad are required for the initial setup.

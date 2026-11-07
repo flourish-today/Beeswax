@@ -64,13 +64,17 @@ object Lock {
         // Unlock first, so the "package added" broadcasts from unhiding don't hide anything again.
         prefs(context).edit().putBoolean(LOCKED, false).commit()
         setGuard(context, false)
-        for (restriction in restrictions(context)) dpm(context).clearUserRestriction(admin(context), restriction)
+        // Also More settings' restrictions, and the debugging block even if Allow developer options lifted it.
+        val all = listOf(UserManager.DISALLOW_FACTORY_RESET, UserManager.DISALLOW_CONFIG_PRIVATE_DNS) +
+            restrictions(context) + UserManager.DISALLOW_DEBUGGING_FEATURES
+        for (restriction in all) dpm(context).clearUserRestriction(admin(context), restriction)
         // Every hidden app, not only the saved lists, so nothing stays hidden if a list was lost.
-        val all = context.packageManager.getInstalledPackages(
+        val packages = context.packageManager.getInstalledPackages(
             PackageManager.PackageInfoFlags.of(PackageManager.MATCH_UNINSTALLED_PACKAGES.toLong()),
         )
-        for (info in all) {
+        for (info in packages) {
             if (dpm(context).isApplicationHidden(admin(context), info.packageName)) setHidden(context, info.packageName, false)
+            if (dpm(context).isUninstallBlocked(admin(context), info.packageName)) setUninstallBlocked(context, info.packageName, false)
         }
         prefs(context).edit().clear().commit()
     }
@@ -84,6 +88,7 @@ object Lock {
             .putStringSet(BLOCKED, blocked(context) - packageName)
             .putStringSet(QUARANTINED, quarantined(context) - packageName)
             .commit()
+        setUninstallBlocked(context, packageName, false)
         setHidden(context, packageName, false)
     }
 
@@ -96,7 +101,7 @@ object Lock {
             .putStringSet(BLOCKED, blocked(context) + packageName)
             .putStringSet(QUARANTINED, quarantined(context) - packageName)
             .commit()
-        setHidden(context, packageName, true)
+        block(context, packageName)
     }
 
     // New code, from the list. Synchronized so it can't run in the middle of Deactivate's unlock.
@@ -104,6 +109,15 @@ object Lock {
     fun newCode(context: Context, code: String) {
         if (isLocked(context)) Code.save(context, code)
     }
+
+    // More settings. Only while locked, so a change confirmed during Deactivate can't outlast it.
+    @Synchronized
+    fun setRestriction(context: Context, restriction: String, on: Boolean) {
+        if (!isLocked(context)) return
+        if (on) dpm(context).addUserRestriction(admin(context), restriction) else dpm(context).clearUserRestriction(admin(context), restriction)
+    }
+
+    fun hasRestriction(context: Context, restriction: String) = dpm(context).getUserRestrictions(admin(context)).getBoolean(restriction)
 
     // The list: every installed app that isn't part of the system, every browser and every app with a
     // home-screen icon (built-in ones too, so they can be blocked) and anything Beeswax hid, hidden or not.
@@ -125,7 +139,7 @@ object Lock {
     @Synchronized
     fun enforce(context: Context) {
         if (!isLocked(context)) return
-        for (packageName in blocked(context) - essential(context)) setHidden(context, packageName, true)
+        for (packageName in blocked(context) - essential(context)) block(context, packageName)
         for (info in userApps(context)) check(context, info)
     }
 
@@ -134,7 +148,7 @@ object Lock {
     fun check(context: Context, packageName: String) {
         if (!isLocked(context)) return
         if (packageName in blocked(context)) {
-            if (packageName !in essential(context)) setHidden(context, packageName, true)
+            if (packageName !in essential(context)) block(context, packageName)
             return
         }
         // Include hidden apps: Android re-hides a reinstalled app that a device owner hid before,
@@ -151,11 +165,6 @@ object Lock {
     fun icon(context: Context, packageName: String): Drawable? {
         val info = packageInfo(context, packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
         return info?.applicationInfo?.loadIcon(context.packageManager)
-    }
-
-    // Other apps that are active device admins. Android won't hide them, so Lock refuses while any exist.
-    fun otherAdmins(context: Context) = dpm(context).activeAdmins.orEmpty().map { it.packageName }.distinct().filter {
-        packageInfo(context, it, PackageManager.MATCH_UNINSTALLED_PACKAGES)?.let { info -> isUserApp(context, info) } == true
     }
 
     // The browsers Lock blocks by default, hidden or not, so the list starts the same ones switched off.
@@ -235,6 +244,18 @@ object Lock {
         val builtIn = defaults.filter { packageInfo(context, it, 0)?.let { info -> isSystem(info.applicationInfo) } == true }
         val keyboards = context.getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }
         return (builtIn + keyboards + context.packageName).toSet()
+    }
+
+    // Hides an app blocked by name. A built-in app's "Uninstall updates" in Settings brings back the copy from
+    // the system image, which isn't hidden, so blocked built-in apps can't be uninstalled either.
+    private fun block(context: Context, packageName: String) {
+        setHidden(context, packageName, true)
+        val info = packageInfo(context, packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES) ?: return
+        if (isSystem(info.applicationInfo)) setUninstallBlocked(context, packageName, true)
+    }
+
+    private fun setUninstallBlocked(context: Context, packageName: String, blocked: Boolean) {
+        dpm(context).setUninstallBlocked(admin(context), packageName, blocked)
     }
 
     private fun setHidden(context: Context, packageName: String, hidden: Boolean) {

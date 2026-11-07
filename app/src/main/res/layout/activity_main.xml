@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- filterTouchesWhenObscured: ignore taps while another app draws over this screen, so an
-     overlay can't trick anyone into tapping Lock, a switch, New code or Deactivate. -->
+     overlay can't trick anyone into tapping Lock, a switch, New code, More settings, a link or Deactivate. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -26,13 +26,25 @@
             android:layout_height="wrap_content"
             android:text="@string/status_not_device_owner" />
 
-        <TextView
-            android:id="@+id/adb_command"
+        <!-- Before setup: the setup guide, and About. -->
+        <LinearLayout
+            android:id="@+id/setup_controls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="monospace"
-            android:textIsSelectable="true" />
+            android:layout_marginTop="24dp">
+
+            <Button
+                android:id="@+id/setup_guide_from_setup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_guide" />
+
+            <Button
+                android:id="@+id/about_from_setup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/about" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/owner_controls"
@@ -40,12 +52,25 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Closes the open list. Beeswax stays locked. -->
-            <Button
-                android:id="@+id/close_list"
+            <!-- Lock closes the open list. Beeswax stays locked. -->
+            <LinearLayout
+                android:id="@+id/close_list_row"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/lock" />
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/close_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lock" />
+
+                <Button
+                    android:id="@+id/about_from_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/about" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/lock_status"
@@ -59,22 +84,36 @@
                 android:text="@string/lock_test_note"
                 android:visibility="gone" />
 
-            <!-- Shown as typed, so a long code copied from paper is easy to check. No suggestions,
-                 so the keyboard doesn't learn it. -->
-            <EditText
+            <!-- Shown as typed, so a long code copied from paper is easy to check. No suggestions and
+                 no personalized learning, so the keyboard doesn't learn it. -->
+            <org.getflourish.beeswax.CodeField
                 android:id="@+id/code"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="monospace"
                 android:hint="@string/code_hint"
+                android:imeOptions="flagNoPersonalizedLearning"
                 android:importantForAutofill="no"
                 android:inputType="textVisiblePassword|textNoSuggestions" />
 
-            <Button
-                android:id="@+id/open_list"
+            <LinearLayout
+                android:id="@+id/open_list_row"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/open_list" />
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/open_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/open_list" />
+
+                <Button
+                    android:id="@+id/about_from_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/about" />
+            </LinearLayout>
 
             <!-- Filled in by MainActivity before the first Lock and while the list is open. -->
             <LinearLayout
@@ -83,12 +122,32 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
+            <LinearLayout
+                android:id="@+id/lock_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp">
+
+                <Button
+                    android:id="@+id/lock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lock" />
+
+                <Button
+                    android:id="@+id/about_from_plan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/about" />
+            </LinearLayout>
+
             <Button
-                android:id="@+id/lock"
+                android:id="@+id/more_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/lock" />
+                android:text="@string/more_settings" />
 
             <Button
                 android:id="@+id/new_code"
@@ -111,6 +170,278 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="@string/deactivate" />
+        </LinearLayout>
+
+        <!-- More settings, opened from the open list. Each switch shows Android's own state. -->
+        <LinearLayout
+            android:id="@+id/more"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/more_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/back" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/more_settings"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+            <Switch
+                android:id="@+id/block_factory_reset"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/block_factory_reset" />
+
+            <Switch
+                android:id="@+id/lock_private_dns"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/lock_private_dns" />
+
+            <TextView
+                android:id="@+id/private_dns_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small" />
+
+            <Switch
+                android:id="@+id/allow_developer_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/allow_developer_options" />
+        </LinearLayout>
+
+        <!-- About, opened from beside Lock or Unlock. Needs no code. ↗ buttons leave Beeswax, after showing the address. -->
+        <LinearLayout
+            android:id="@+id/about"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/about_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/back" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/about"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large" />
+
+            <TextView
+                android:id="@+id/about_version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textIsSelectable="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:text="@string/licenses_beeswax"
+                android:textIsSelectable="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/website"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/website" />
+
+                <Button
+                    android:id="@+id/licenses_open"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/licenses" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/help"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/setup_guide"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/setup_guide" />
+
+                <Button
+                    android:id="@+id/faq"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/faq" />
+
+                <Button
+                    android:id="@+id/report_issue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/report_issue" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/contact"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+            <TextView
+                android:id="@+id/email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textIsSelectable="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/email_open"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/email" />
+
+                <Button
+                    android:id="@+id/simplex"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/simplex" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/support"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/star_request"
+                android:textIsSelectable="true" />
+
+            <Button
+                android:id="@+id/star"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/star" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/donate"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/monero_quote"
+                android:textIsSelectable="true" />
+
+            <Button
+                android:id="@+id/manifesto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manifesto" />
+
+            <TextView
+                android:id="@+id/monero_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="monospace"
+                android:textIsSelectable="true" />
+
+            <Button
+                android:id="@+id/open_wallet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/open_wallet" />
+
+            <Button
+                android:id="@+id/learn_monero"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/learn_monero" />
+        </LinearLayout>
+
+        <!-- Licenses, opened from About. -->
+        <LinearLayout
+            android:id="@+id/licenses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/licenses_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/back" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/licenses"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/licenses_beeswax"
+                android:textIsSelectable="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/licenses_kotlin"
+                android:textIsSelectable="true" />
+
+            <TextView
+                android:id="@+id/apache_license"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                android:textIsSelectable="true" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

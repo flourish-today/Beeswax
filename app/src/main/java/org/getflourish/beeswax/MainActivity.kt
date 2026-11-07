@@ -12,29 +12,42 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.graphics.Typeface
 import android.os.Bundle
+import android.os.UserManager
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import android.window.OnBackInvokedCallback
+import android.window.OnBackInvokedDispatcher
 
 class MainActivity : Activity() {
     private lateinit var dpm: DevicePolicyManager
     private lateinit var admin: ComponentName
 
-    // Set only by typing the right code, and cleared whenever the screen is left.
+    // Set only by typing the right code. Leaving Beeswax keeps it, so apps can be installed and then allowed;
+    // the screen turning off clears it. Kept in memory only, so it's also cleared when Android ends Beeswax.
     private var listOpen = false
     private val switches = mutableListOf<Switch>()
+
+    // The screen shows one page at a time. More settings is a page of the open list, and closes with it.
+    // About needs no code, and Licenses opens from it. Back returns to the page before.
+    private enum class Page { MAIN, MORE, ABOUT, LICENSES }
+    private var page = Page.MAIN
+    private var backRegistered = false
+    private val back = OnBackInvokedCallback { goBack() }
 
     // The switches changed before the first Lock: package name to on. Only a plan, kept in memory and applied
     // by Lock. Cleared once locked or no longer device owner.
@@ -45,6 +58,9 @@ class MainActivity : Activity() {
     private val lockListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> refresh() }
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) = refresh()
+    }
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) = closeList()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +80,6 @@ class MainActivity : Activity() {
             insets
         }
         findViewById<TextView>(R.id.title).text = applicationInfo.loadLabel(packageManager)
-        findViewById<TextView>(R.id.adb_command).text = "adb shell dpm set-device-owner ${admin.flattenToShortString()}"
         findViewById<Button>(R.id.deactivate).setOnClickListener { confirmDeactivate() }
         findViewById<Button>(R.id.lock).setOnClickListener {
             if (canLock()) showNewCode()
@@ -75,6 +90,21 @@ class MainActivity : Activity() {
             refresh()
         }
         findViewById<Button>(R.id.new_code).setOnClickListener { showNewCode() }
+        findViewById<Button>(R.id.more_settings).setOnClickListener { open(Page.MORE) }
+        for (id in listOf(R.id.about_from_list, R.id.about_from_code, R.id.about_from_plan, R.id.about_from_setup)) {
+            findViewById<Button>(id).setOnClickListener { open(Page.ABOUT) }
+        }
+        findViewById<Button>(R.id.licenses_open).setOnClickListener { open(Page.LICENSES) }
+        for (id in listOf(R.id.more_back, R.id.about_back, R.id.licenses_back)) {
+            findViewById<Button>(id).setOnClickListener { goBack() }
+        }
+        About.setUp(this)
+        registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF), Context.RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(screenOffReceiver)
+        super.onDestroy()
     }
 
     override fun onResume() {
@@ -89,23 +119,28 @@ class MainActivity : Activity() {
     override fun onPause() {
         Lock.prefs(this).unregisterOnSharedPreferenceChangeListener(lockListener)
         unregisterReceiver(refreshReceiver)
-        closeList()
         super.onPause()
     }
 
-    // Leaving the screen, or Lock at the top of the open list, closes the list and clears the code.
-    // Beeswax stays locked.
+    // The screen turning off, or Lock at the top of the open list, closes the list and clears the code.
+    // Beeswax stays locked. Reopening Beeswax refreshes the screen.
     private fun closeList() {
         listOpen = false
+        page = Page.MAIN
         findViewById<EditText>(R.id.code).text.clear()
     }
+
+    private fun open(next: Page) {
+        page = next
+        findViewById<ScrollView>(R.id.root).scrollTo(0, 0)
+        refresh()
+    }
+
+    private fun goBack() = open(if (page == Page.LICENSES) Page.ABOUT else Page.MAIN)
 
     private fun refresh() {
         val owner = dpm.isDeviceOwnerApp(packageName)
         if (!owner) plan.clear()
-        findViewById<View>(R.id.status).visibility = shownIf(!owner)
-        findViewById<View>(R.id.adb_command).visibility = shownIf(!owner)
-        findViewById<View>(R.id.owner_controls).visibility = shownIf(owner)
         if (owner) {
             val backupsOn = try {
                 dpm.setBackupServiceEnabled(admin, true)
@@ -116,6 +151,59 @@ class MainActivity : Activity() {
             findViewById<View>(R.id.backups_failed).visibility = if (backupsOn) View.GONE else View.VISIBLE
             refreshLock()
         }
+        if (page == Page.MORE && !(owner && listOpen)) page = Page.MAIN
+        val main = page == Page.MAIN
+        findViewById<View>(R.id.status).visibility = shownIf(!owner && main)
+        findViewById<View>(R.id.setup_controls).visibility = shownIf(!owner && main)
+        findViewById<View>(R.id.owner_controls).visibility = shownIf(owner && main)
+        findViewById<View>(R.id.more).visibility = shownIf(page == Page.MORE)
+        findViewById<View>(R.id.about).visibility = shownIf(page == Page.ABOUT)
+        findViewById<View>(R.id.licenses).visibility = shownIf(page == Page.LICENSES)
+        if (page == Page.MORE) refreshMore()
+        if (!main != backRegistered) {
+            if (!main) onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, back)
+            else onBackInvokedDispatcher.unregisterOnBackInvokedCallback(back)
+            backRegistered = !main
+        }
+    }
+
+    // Each switch shows Android's own state, so nothing new is saved. Changes need the open list, so the code.
+    private fun refreshMore() {
+        val reset = UserManager.DISALLOW_FACTORY_RESET
+        val dns = UserManager.DISALLOW_CONFIG_PRIVATE_DNS
+        val debugging = UserManager.DISALLOW_DEBUGGING_FEATURES
+        setUpSwitch(R.id.block_factory_reset, Lock.hasRestriction(this, reset)) {
+            Lock.setRestriction(this, reset, it)
+            null
+        }
+        // Beeswax can't set a host itself: Android tests it from the calling app, which would need internet access.
+        // So it locks the one set in Settings, and only if there is one.
+        val host = if (dpm.getGlobalPrivateDnsMode(admin) == DevicePolicyManager.PRIVATE_DNS_MODE_PROVIDER_HOSTNAME) {
+            dpm.getGlobalPrivateDnsHost(admin)
+        } else {
+            null
+        }
+        val dnsLocked = Lock.hasRestriction(this, dns)
+        setUpSwitch(R.id.lock_private_dns, dnsLocked) { on ->
+            if (on && host == null) return@setUpSwitch getString(R.string.private_dns_not_set)
+            Lock.setRestriction(this, dns, on)
+            null
+        }
+        val note = getString(R.string.lock_private_dns_note)
+        findViewById<TextView>(R.id.private_dns_note).text =
+            if (dnsLocked && host != null) note + "\n\n" + getString(R.string.private_dns_kept, host) else note
+        setUpSwitch(R.id.allow_developer_options, !Lock.hasRestriction(this, debugging)) {
+            Lock.setRestriction(this, debugging, !it)
+            null
+        }
+    }
+
+    // The change returns a message to show, or null.
+    private fun setUpSwitch(id: Int, on: Boolean, change: (Boolean) -> String?) {
+        val switch = findViewById<Switch>(id)
+        switch.setOnCheckedChangeListener(null)
+        switch.isChecked = on
+        switch.setOnCheckedChangeListener { _, checked -> if (listOpen) inBackground { change(checked) } else refresh() }
     }
 
     private fun refreshLock() {
@@ -126,11 +214,13 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.lock_test_note).visibility = shownIf(Lock.isTestBuild(this))
         // Before the first Lock, the list shows as the plan for it. While locked, only the code field shows
         // until the right code opens the list. Deactivate shows before the first Lock and in the open list.
-        findViewById<View>(R.id.close_list).visibility = shownIf(listOpen)
-        findViewById<View>(R.id.lock).visibility = shownIf(!locked)
+        // About sits beside each of them.
+        findViewById<View>(R.id.close_list_row).visibility = shownIf(listOpen)
+        findViewById<View>(R.id.lock_row).visibility = shownIf(!locked)
         findViewById<View>(R.id.code).visibility = shownIf(locked && !listOpen)
-        findViewById<View>(R.id.open_list).visibility = shownIf(locked && !listOpen)
+        findViewById<View>(R.id.open_list_row).visibility = shownIf(locked && !listOpen)
         findViewById<View>(R.id.new_code).visibility = shownIf(listOpen)
+        findViewById<View>(R.id.more_settings).visibility = shownIf(listOpen)
         findViewById<View>(R.id.deactivate).visibility = shownIf(!locked || listOpen)
         val list = findViewById<LinearLayout>(R.id.app_list)
         list.removeAllViews()
@@ -210,15 +300,11 @@ class MainActivity : Activity() {
         refresh()
     }
 
-    // Android won't hide an app that is a device admin, and other users have their own browsers.
+    // Other users have their own browsers. Other device admin apps are allowed: they're chosen at setup, and
+    // one switched off stays on the blocked list, hidden once it's no longer a device admin.
     private fun canLock(): Boolean {
-        val admins = Lock.otherAdmins(this)
-        val message = when {
-            admins.isNotEmpty() -> getString(R.string.lock_other_admins, admins.map { Lock.label(this, it) }.joinToString())
-            dpm.getSecondaryUsers(admin).isNotEmpty() -> getString(R.string.lock_other_users)
-            else -> return true
-        }
-        show(AlertDialog.Builder(this).setMessage(message).setPositiveButton(android.R.string.ok, null))
+        if (dpm.getSecondaryUsers(admin).isEmpty()) return true
+        show(AlertDialog.Builder(this).setMessage(R.string.lock_other_users).setPositiveButton(android.R.string.ok, null))
         return false
     }
 
@@ -245,10 +331,11 @@ class MainActivity : Activity() {
     // or the list closed.
     private fun checkNewCode(code: String) {
         val fromList = Lock.isLocked(this)
-        val field = EditText(this)
+        val field = CodeField(this)
         field.typeface = Typeface.MONOSPACE
         field.setHint(R.string.code_hint)
         field.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
+        field.imeOptions = EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
         field.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD or
             InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         val frame = FrameLayout(this)
@@ -276,7 +363,7 @@ class MainActivity : Activity() {
     }
 
     // Dialogs have their own windows, so each needs the screen's block on screenshots too.
-    private fun show(builder: AlertDialog.Builder) {
+    fun show(builder: AlertDialog.Builder) {
         val dialog = builder.create()
         if (!Lock.isTestBuild(this)) dialog.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         dialog.show()
